@@ -1,0 +1,70 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        env:
+          GITHUB_PAGES: "true"
+        run: npm run build
+
+      - name: Prepare Pages artifacts
+        run: |
+          OUT=dist/client
+          test -d "$OUT"
+          # SPA shell becomes the site entry + GitHub Pages SPA fallback
+          if [ -f "$OUT/_shell.html" ]; then
+            cp "$OUT/_shell.html" "$OUT/index.html"
+            cp "$OUT/_shell.html" "$OUT/404.html"
+          elif [ -f "$OUT/index.html" ]; then
+            cp "$OUT/index.html" "$OUT/404.html"
+          else
+            echo "No HTML entry found in $OUT" >&2
+            ls -la "$OUT"
+            exit 1
+          fi
+          touch "$OUT/.nojekyll"
+          ls -la "$OUT"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/client
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

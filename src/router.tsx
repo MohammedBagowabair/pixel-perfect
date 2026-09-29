@@ -10,6 +10,10 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
+    // Match Vite `base` when deploying to GitHub Pages project site.
+    ...(import.meta.env.BASE_URL !== "/"
+      ? { basepath: import.meta.env.BASE_URL.replace(/\/$/, "") }
+      : {}),
   });
 
   return router;
