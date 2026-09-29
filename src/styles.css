@@ -117,11 +117,7 @@
 
 @utility rule-line {
   height: 1px;
-  background: linear-gradient(
-    to inline-end,
-    color-mix(in oklab, var(--foreground) 22%, transparent),
-    transparent
-  );
+  background: color-mix(in oklab, var(--foreground) 16%, transparent);
 }
 
 @utility hairline-grid {
